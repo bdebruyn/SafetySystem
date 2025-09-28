@@ -1,0 +1,75 @@
+@startuml
+title SafetyRules – Nominal and Fault Paths
+
+actor Operator as Op
+participant "Power Source" as Power
+participant "SafetyRules FSM" as SR
+participant "Loader Subsystem" as Loader
+participant "Door Sensor" as Door
+participant "BuildPlate Sensor" as Plate
+participant "Machine I/O" as M
+participant "Logger" as Log
+
+== Power On ==
+Op -> Power: Turn on power
+Power -> SR: evPowerOn
+rnote over SR
+  Idle -> Active
+  (wait for safety event)
+endrnote
+
+== Start Build Plate Load ==
+SR -> Loader: start()  // Active -> BuildPlateLoader
+rnote over SR
+  Enter BuildPlateLoader
+  [*] -> OpenDoor
+endrnote
+
+SR -> M: requestDoorOpen()  // OpenDoor: entry action
+
+Door --> SR: evDoorOpened
+rnote over SR
+  OpenDoor -> DoorOpened
+endrnote
+
+SR -> M: requestLoadBuildPlate() // DoorOpened: entry action
+
+Plate --> SR: evBuildPlateLoaded
+rnote over SR
+  DoorOpened -> BuildPlateLoaded
+endrnote
+
+SR -> M: requestDoorClose() // BuildPlateLoaded: entry action
+
+Door --> SR: evDoorClosed
+rnote over SR
+  BuildPlateLoaded -> [*]
+  Submachine complete
+endrnote
+
+... default transition ...
+SR -> SR: Return to Active
+
+== Power Off (optional) ==
+Op -> SR: evPowerOff
+rnote over SR
+  Active -> Idle
+endrnote
+
+== Fault Branch (at any time in Active or BuildPlateLoader) ==
+group Fault occurs
+  note over SR: evFault
+  SR -> Log: log()  // Faulted: entry / log()
+  rnote over SR
+    -> Faulted
+  endrnote
+
+  == Recovery ==
+  Op -> SR: evPowerOn
+  rnote over SR
+    Faulted -> Active
+  endrnote
+end
+
+@enduml
+

@@ -1,0 +1,41 @@
+@startuml
+left to right direction
+
+' global spacing (Graphviz)
+skinparam ranksep 5
+skinparam Padding 2
+skinparam Shadowing false
+
+state SafetyRules {
+   state Idle
+   [*] -> Idle
+   Idle --> Active: evPowerOn
+   Active --> Idle : evPowerOff
+   Active : wait for safety event
+
+   Active -> Faulted: evFault
+   Active -> BuildPlateLoader: loader.start() 
+
+   state Faulted
+   Faulted --> Active : evPowerOn
+   Faulted : entry / log()
+
+   state BuildPlateLoader {
+      top to bottom direction
+      [*] -> OpenDoor
+      state OpenDoor
+          OpenDoor : entry / m.requestDoorOpen()
+      state DoorOpened
+          DoorOpened : entry / m.requestLoadBuildPlate()
+      state BuildPlateLoaded
+          BuildPlateLoaded : entry / m.requestDoorClose()
+    
+      OpenDoor --> DoorOpened : evDoorOpened
+      DoorOpened --> BuildPlateLoaded : evBuildPlateLoaded
+      BuildPlateLoaded --> [*] : evDoorClosed
+   }
+
+   BuildPlateLoader -> Active : // default transition
+   BuildPlateLoader --> Faulted : evFault
+}
+@enduml

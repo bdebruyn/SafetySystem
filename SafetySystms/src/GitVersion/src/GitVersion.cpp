@@ -1,0 +1,1 @@
+#include "GitVersion/GitVersion.h"
