@@ -1,1 +1,2 @@
+add_subdirectory(Test_SafetyRules)
 add_subdirectory(Test_Simple)

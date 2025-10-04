@@ -2,40 +2,58 @@
 left to right direction
 
 ' global spacing (Graphviz)
-skinparam ranksep 5
-skinparam Padding 2
-skinparam Shadowing false
+'skinparam ranksep 5
+'skinparam Padding 2
+'skinparam Shadowing false
+skinparam linetype ortho   ' or: polyline (default), spline
 
 state SafetyRules {
-   state Idle
-   [*] -> Idle
-   Idle --> Active: evPowerOn
-   Active --> Idle : evPowerOff
-   Active : wait for safety event
+   top to bottom direction
 
-   Active -> Faulted: evFault
-   Active -> BuildPlateLoader: loader.start() 
+   SafetyRules: '  Safety Model for a factory floor 3D printer.
+   SafetyRules: '  Description (not intended as requirements):
+   SafetyRules: '     1. Printer doors are rigged with sensors that cut power if opened in the wrong state.
+   SafetyRules: '     2. Transitions to a procedural state will disable select door sensors.
+   SafetyRules: '     3. Transitions out of a procedural state will enable select door sensors.
+
+   state Idle
+      Idle : ' Power is off. Tranistion to Active state on power up
+
+   Active -up-> Idle : evIdle
+      Active : ' Power on.
+      Active : ' Wait for evLoadBuildPlate
 
    state Faulted
-   Faulted --> Active : evPowerOn
-   Faulted : entry / log()
+      Faulted : ' Violation detected. Power is off.
 
    state BuildPlateLoader {
       top to bottom direction
-      [*] -> OpenDoor
+ 
       state OpenDoor
-          OpenDoor : entry / m.requestDoorOpen()
+          OpenDoor : entry/send(evRequestDoorOpen)
       state DoorOpened
-          DoorOpened : entry / m.requestLoadBuildPlate()
+          DoorOpened : entry/send(evRequestLoadBuildPlateNotification)
       state BuildPlateLoaded
-          BuildPlateLoaded : entry / m.requestDoorClose()
-    
+          BuildPlateLoaded : entry/send(evRequestDoorClose)
+
+      [*] -> OpenDoor  
       OpenDoor --> DoorOpened : evDoorOpened
       DoorOpened --> BuildPlateLoaded : evBuildPlateLoaded
       BuildPlateLoaded --> [*] : evDoorClosed
+      BuildPlateLoaded --> Faulted : evBuildPlateUnloaded
    }
 
-   BuildPlateLoader -> Active : // default transition
-   BuildPlateLoader --> Faulted : evFault
+   [*] --> Idle
+   Idle -> Active: evActive
+
+   Active -> Faulted: evFault
+   Active -> BuildPlateLoader: evLoadBuildPlate 
+
+   Faulted -> Idle : evIdle
+
+   BuildPlateLoader -> Active
+   BuildPlateLoader --> Faulted : evFault 
+
 }
 @enduml
+
