@@ -208,13 +208,13 @@ llvm-cov report ./build-cov/tests/Test_SafetyRules --instr-profile=coverage.prof
 
 ```
 .
-├── SafetyRules.h              # Header‑only implementation (SUT)
-├── StartChart.plantuml        # Specification model (source of truth)
-└── Test_SafetyRules.cpp       # GoogleTest suite (LLM‑generated)
+├── src/SafetyRules/include/SafetyRules/SafetyRules.h   # Header‑only implementation (SUT)
+├── doc/StartChart.plantuml                             # Specification model (source of truth)
+└── tests/Test_SafetyRules/Test_SafetyRules.cpp         # GoogleTest suite (LLM‑generated)
 ```
 
 ---
 
 ### Author’s Note
 
-This README was generated to accompany an LLM‑assisted testing exercise. If you want this report to include **actual numeric coverage tables**, add a `CMakePresets.json` profile with coverage flags and a post‑test step that runs `llvm-cov report` (or `gcovr`) and writes results to `coverage/`.
+This README was generated to accompany an LLM‑assisted testing exercise. A PDF version of the metrics and the gcov file can be found under doc/index.html.pdf and doc/SafetyRules.h.html.pdf. 
